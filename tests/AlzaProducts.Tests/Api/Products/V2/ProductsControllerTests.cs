@@ -1,9 +1,11 @@
 using AlzaProducts.Api.Products;
+using AlzaProducts.Api.Products.V2;
+using AlzaProducts.Application.Paging;
 using AlzaProducts.Application.Products;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 
-namespace AlzaProducts.Tests.Api.Products;
+namespace AlzaProducts.Tests.Api.Products.V2;
 
 public class ProductsControllerTests
 {
@@ -16,15 +18,15 @@ public class ProductsControllerTests
     }
 
     [Fact]
-    public async Task GetAll_ReturnsOkWithProducts()
+    public async Task GetPage_ReturnsOkWithRequestedPage()
     {
-        IReadOnlyList<ProductDto> products = [CreateProduct()];
-        _productService.GetAllAsync(Arg.Any<CancellationToken>()).Returns(products);
+        var page = new PagedResult<ProductDto>([CreateProduct()], 2, 5, 6);
+        _productService.GetPageAsync(new PageRequest(2, 5), Arg.Any<CancellationToken>()).Returns(page);
 
-        var result = await _controller.GetAll(CancellationToken.None);
+        var result = await _controller.GetPage(2, 5, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Same(products, ok.Value);
+        Assert.Same(page, ok.Value);
     }
 
     [Fact]

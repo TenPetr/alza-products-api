@@ -1,13 +1,15 @@
 using AlzaProducts.Application.Products;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AlzaProducts.Api.Products;
+namespace AlzaProducts.Api.Products.V1;
 
 /// <summary>
 /// Products of the e-shop
 /// </summary>
 [ApiController]
-[Route("api/v1/products")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/products")]
 public sealed class ProductsController(IProductService productService) : ControllerBase
 {
     /// <summary>Lists all products, ordered by name</summary>
@@ -21,6 +23,7 @@ public sealed class ProductsController(IProductService productService) : Control
     }
 
     /// <summary>Gets a product by its id</summary>
+    /// <param name="id">Unique identifier of the product</param>
     /// <response code="200">The product</response>
     /// <response code="404">No product with this id exists</response>
     [HttpGet("{id:guid}")]
@@ -33,6 +36,7 @@ public sealed class ProductsController(IProductService productService) : Control
     }
 
     /// <summary>Updates the description of a product</summary>
+    /// <param name="id">Unique identifier of the product</param>
     /// <response code="200">The updated product</response>
     /// <response code="400">The request is invalid, for example the description is too long</response>
     /// <response code="404">No product with this id exists</response>

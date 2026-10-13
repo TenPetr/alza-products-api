@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using AlzaProducts.Application.Paging;
 using AlzaProducts.Application.Products;
 using AlzaProducts.Domain;
 
@@ -17,12 +18,18 @@ public sealed class InMemoryProductRepository(IEnumerable<Product> products) : I
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        IReadOnlyList<Product> result = _products.Values
-            .OrderBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(product => product.Id)
-            .Select(Copy)
-            .ToList();
+        IReadOnlyList<Product> result = OrderedProducts().Select(Copy).ToList();
         return Task.FromResult(result);
+    }
+
+    public Task<PagedResult<Product>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var products = OrderedProducts();
+        var items = products.Skip(request.Skip).Take(request.PageSize).Select(Copy).ToList();
+        return Task.FromResult(new PagedResult<Product>(items, request.Page, request.PageSize, products.Count));
     }
 
     public Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -46,6 +53,12 @@ public sealed class InMemoryProductRepository(IEnumerable<Product> products) : I
         _products[product.Id] = Copy(product);
         return Task.CompletedTask;
     }
+
+    // A snapshot of the stored products, in the order every list uses, so a page and its total count always agree
+    private List<Product> OrderedProducts() => _products.Values
+        .OrderBy(product => product.Name, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(product => product.Id)
+        .ToList();
 
     private static Product Copy(Product product) =>
         new(product.Id, product.Name, product.ImgUri, product.Price, product.Description);

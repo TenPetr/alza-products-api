@@ -1,3 +1,5 @@
+using AlzaProducts.Application.Paging;
+
 namespace AlzaProducts.Application.Products;
 
 public sealed class ProductService(IProductRepository repository, ILogger<ProductService> logger) : IProductService
@@ -6,6 +8,14 @@ public sealed class ProductService(IProductRepository repository, ILogger<Produc
     {
         var products = await repository.GetAllAsync(cancellationToken);
         return products.Select(ProductDto.FromProduct).ToList();
+    }
+
+    public async Task<PagedResult<ProductDto>> GetPageAsync(
+        PageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var products = await repository.GetPageAsync(request, cancellationToken);
+        return products.Map(ProductDto.FromProduct);
     }
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

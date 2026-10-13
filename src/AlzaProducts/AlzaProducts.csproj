@@ -1,12 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <!-- XML doc comments feed the OpenAPI (Swagger) documentation; not every public member needs one -->
+    <!-- Title and description of the OpenAPI (Swagger) documents, one document per API version -->
+    <AssemblyTitle>Alza Products API</AssemblyTitle>
+    <Description>Products of an e-shop, with a partial update of a single product</Description>
+    <!-- XML doc comments feed the OpenAPI (Swagger) documentation; not every public member or parameter needs one -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+    <PackageReference Include="Asp.Versioning.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>

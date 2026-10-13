@@ -53,6 +53,16 @@ public class LayerDependencyTests
             .Should().NotDependOnAny(InfrastructureLayer)
             .Check(Architecture);
 
+    // Each API version is its own contract, so a change in one version never changes another;
+    // what the versions share lives one level up, e.g. in Api/Products
+    [Theory]
+    [InlineData("V1", "V2")]
+    [InlineData("V2", "V1")]
+    public void ApiVersions_DoNotDependOnEachOther(string version, string otherVersion) =>
+        Types().That().ResideInNamespaceMatching($@"^AlzaProducts\.Api(\..+)?\.{version}$")
+            .Should().NotDependOnAnyTypesThat().ResideInNamespaceMatching($@"^AlzaProducts\.Api(\..+)?\.{otherVersion}$")
+            .Check(Architecture);
+
     private static IObjectProvider<IType> Layer(string name) => Types()
         .That().ResideInNamespaceMatching($@"^AlzaProducts\.{name}(\..+)?$")
         .As($"{name} layer");

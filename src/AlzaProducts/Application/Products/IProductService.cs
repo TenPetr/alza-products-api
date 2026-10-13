@@ -1,3 +1,5 @@
+using AlzaProducts.Application.Paging;
+
 namespace AlzaProducts.Application.Products;
 
 /// <summary>
@@ -7,6 +9,9 @@ public interface IProductService
 {
     /// <summary>Returns all products ordered by name, then by id</summary>
     Task<IReadOnlyList<ProductDto>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Returns one page of products ordered by name, then by id</summary>
+    Task<PagedResult<ProductDto>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>Returns the product with the given id, or null if it does not exist</summary>
     Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

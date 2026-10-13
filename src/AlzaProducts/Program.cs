@@ -16,10 +16,15 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // One OpenAPI document and Swagger UI definition per API version (v1, v2, ...)
+    app.MapOpenApi().WithDocumentPerVersion();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "v1");
+        foreach (var description in app.DescribeApiVersions())
+        {
+            options.SwaggerEndpoint($"/openapi/{description.GroupName}.json", description.GroupName);
+        }
+
         options.DocumentTitle = "Alza Products API";
     });
 }

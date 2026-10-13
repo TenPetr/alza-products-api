@@ -1,3 +1,4 @@
+using AlzaProducts.Application.Paging;
 using AlzaProducts.Application.Products;
 using AlzaProducts.Domain;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -52,6 +53,36 @@ public class ProductServiceTests
         await _service.GetAllAsync(cancellation.Token);
 
         await _repository.Received(1).GetAllAsync(cancellation.Token);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_ReturnsPageOfDtosWithPagingInformation()
+    {
+        var laptop = CreateProduct("Laptop", "Fast and light");
+        var request = new PageRequest(2, 1);
+        _repository.GetPageAsync(request, Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<Product>([laptop], 2, 1, 3));
+
+        var result = await _service.GetPageAsync(request);
+
+        ProductDto[] expected = [new(laptop.Id, "Laptop", laptop.ImgUri, laptop.Price, "Fast and light")];
+        Assert.Equal(expected, result.Items);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(1, result.PageSize);
+        Assert.Equal(3, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetPageAsync_PassesRequestAndCancellationTokenToRepository()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var request = new PageRequest(3, 5);
+        _repository.GetPageAsync(Arg.Any<PageRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<Product>([], 3, 5, 0));
+
+        await _service.GetPageAsync(request, cancellation.Token);
+
+        await _repository.Received(1).GetPageAsync(request, cancellation.Token);
     }
 
     [Fact]

@@ -1,24 +1,31 @@
-using Microsoft.OpenApi;
+using Asp.Versioning;
 
 namespace AlzaProducts.Api;
 
 public static class DependencyInjection
 {
-    /// <summary>Registers the controllers, standard error responses (ProblemDetails) and the OpenAPI document</summary>
+    /// <summary>
+    /// Registers the controllers, standard error responses (ProblemDetails), API versioning
+    /// and one OpenAPI document per API version
+    /// </summary>
     public static IServiceCollection AddApi(this IServiceCollection services)
     {
         services.AddControllers();
         services.AddProblemDetails();
-        services.AddOpenApi(options => options.AddDocumentTransformer((document, _, _) =>
-        {
-            document.Info = new OpenApiInfo
+        services.AddApiVersioning(options =>
             {
-                Title = "Alza Products API",
-                Version = "v1",
-                Description = "Products of an e-shop, with a partial update of a single product",
-            };
-            return Task.CompletedTask;
-        }));
+                // The version is a part of the URL (/api/v1/...) and responses list the supported versions in a header
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+                options.ReportApiVersions = true;
+            })
+            .AddMvc()
+            .AddApiExplorer(options =>
+            {
+                // Documents are named v1, v2, ... and show /api/v1/... instead of /api/v{version}/...
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            })
+            .AddOpenApi();
         return services;
     }
 }
