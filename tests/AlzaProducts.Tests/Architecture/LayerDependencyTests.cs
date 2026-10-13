@@ -46,6 +46,13 @@ public class LayerDependencyTests
             .Should().NotDependOnAny(ApiLayer)
             .Check(Architecture);
 
+    // Controllers talk to the use cases only; the data access is wired up in Program.cs, outside the layers
+    [Fact]
+    public void Api_DoesNotDependOnInfrastructure() =>
+        Types().That().Are(ApiLayer)
+            .Should().NotDependOnAny(InfrastructureLayer)
+            .Check(Architecture);
+
     private static IObjectProvider<IType> Layer(string name) => Types()
         .That().ResideInNamespaceMatching($@"^AlzaProducts\.{name}(\..+)?$")
         .As($"{name} layer");
