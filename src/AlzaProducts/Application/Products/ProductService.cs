@@ -1,7 +1,4 @@
-using AlzaProducts.Application.Dtos;
-using AlzaProducts.Application.Interfaces;
-
-namespace AlzaProducts.Application.Services;
+namespace AlzaProducts.Application.Products;
 
 public sealed class ProductService(IProductRepository repository, ILogger<ProductService> logger) : IProductService
 {

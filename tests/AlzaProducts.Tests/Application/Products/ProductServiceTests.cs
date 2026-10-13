@@ -1,11 +1,9 @@
-using AlzaProducts.Application.Dtos;
-using AlzaProducts.Application.Interfaces;
-using AlzaProducts.Application.Services;
+using AlzaProducts.Application.Products;
 using AlzaProducts.Domain;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
-namespace AlzaProducts.Tests.Application.Services;
+namespace AlzaProducts.Tests.Application.Products;
 
 public class ProductServiceTests
 {

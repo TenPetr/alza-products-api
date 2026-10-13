@@ -40,6 +40,12 @@ public class LayerDependencyTests
             .AndShould().NotDependOnAnyTypesThat().ResideInNamespaceMatching(WebAndDataFrameworks)
             .Check(Architecture);
 
+    [Fact]
+    public void Infrastructure_DoesNotDependOnApi() =>
+        Types().That().Are(InfrastructureLayer)
+            .Should().NotDependOnAny(ApiLayer)
+            .Check(Architecture);
+
     private static IObjectProvider<IType> Layer(string name) => Types()
         .That().ResideInNamespaceMatching($@"^AlzaProducts\.{name}(\..+)?$")
         .As($"{name} layer");

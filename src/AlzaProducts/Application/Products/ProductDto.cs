@@ -1,6 +1,6 @@
 using AlzaProducts.Domain;
 
-namespace AlzaProducts.Application.Dtos;
+namespace AlzaProducts.Application.Products;
 
 /// <summary>
 /// A product as returned to API clients

@@ -1,6 +1,6 @@
 using AlzaProducts.Domain;
 
-namespace AlzaProducts.Application.Interfaces;
+namespace AlzaProducts.Application.Products;
 
 /// <summary>
 /// Storage of products

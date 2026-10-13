@@ -1,6 +1,4 @@
-using AlzaProducts.Application.Dtos;
-
-namespace AlzaProducts.Application.Services;
+namespace AlzaProducts.Application.Products;
 
 /// <summary>
 /// Product use cases offered to the API layer
