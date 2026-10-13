@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using AlzaProducts.Infrastructure.Products;
 
 namespace AlzaProducts.Tests.Infrastructure.Products;
@@ -17,6 +18,16 @@ public class SampleProductsTests
         var products = SampleProducts.Create();
 
         Assert.Equal(products.Count, products.Select(product => product.Id).Distinct().Count());
+    }
+
+    // Random GUIDs would land at random places in SQL Server's clustered index and fragment it;
+    // SqlGuid compares the way SQL Server sorts, and new ids come from EF Core's SequentialGuidValueGenerator
+    [Fact]
+    public void Create_HasIdsInSqlServerSortOrder()
+    {
+        var ids = SampleProducts.Create().Select(product => new SqlGuid(product.Id)).ToList();
+
+        Assert.Equal(ids.Order(), ids);
     }
 
     [Fact]

@@ -21,7 +21,8 @@ public sealed class ProductsApiTests : IDisposable
 
     public ProductsApiTests()
     {
-        _client = _factory.CreateClient();
+        // Runs on the mock data, whatever data source the application is configured with
+        _client = _factory.WithWebHostBuilder(builder => builder.UseSetting("DataSource", "Mock")).CreateClient();
     }
 
     public void Dispose()
