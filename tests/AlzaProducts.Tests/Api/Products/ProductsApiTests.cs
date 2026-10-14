@@ -211,6 +211,21 @@ public sealed class ProductsApiTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateDescription_WithUnknownProperty_ReturnsValidationProblemAndKeepsDescription()
+    {
+        var product = SampleProducts.Create()[0];
+
+        var response = await _client.PatchAsJsonAsync(
+            $"/api/v1/products/{product.Id}",
+            new { description = "New description", price = 1m });
+
+        var problem = await AssertProblemAsync<ValidationProblemDetails>(response, HttpStatusCode.BadRequest);
+        Assert.Contains("$.price", problem.Errors.Keys);
+        var stored = await _client.GetFromJsonAsync<ProductDto>($"/api/v1/products/{product.Id}");
+        Assert.Equal(product.Description, stored?.Description);
+    }
+
+    [Fact]
     public async Task UnsupportedApiVersion_ReturnsNotFoundProblem()
     {
         var response = await _client.GetAsync("/api/v3/products");
@@ -255,16 +270,41 @@ public sealed class ProductsApiTests : IDisposable
     {
         using var json = JsonDocument.Parse(await _client.GetStringAsync("/openapi/v2.json"));
 
-        var schemas = json.RootElement
-            .GetProperty("paths").GetProperty("/api/v2/products").GetProperty("get").GetProperty("parameters")
-            .EnumerateArray()
-            .ToDictionary(
-                parameter => parameter.GetProperty("name").GetString()!,
-                parameter => parameter.GetProperty("schema"));
+        var schemas = ParameterSchemas(json.RootElement, "/api/v2/products");
         Assert.Equal(1, schemas["page"].GetProperty("default").GetInt32());
         Assert.Equal(1, schemas["page"].GetProperty("minimum").GetInt32());
         Assert.Equal(10, schemas["pageSize"].GetProperty("default").GetInt32());
         Assert.Equal(PageRequest.MaxPageSize, schemas["pageSize"].GetProperty("maximum").GetInt32());
+    }
+
+    // The web JSON defaults also accept numbers written as strings, which the documents would show as "integer | string"
+    [Fact]
+    public async Task OpenApiDocument_DescribesNumbersAsPlainNumbers()
+    {
+        using var json = JsonDocument.Parse(await _client.GetStringAsync("/openapi/v2.json"));
+
+        var parameters = ParameterSchemas(json.RootElement, "/api/v2/products");
+        var schemas = json.RootElement.GetProperty("components").GetProperty("schemas");
+        var pagedResult = schemas.GetProperty("PagedResultOfProductDto").GetProperty("properties");
+        var product = schemas.GetProperty("ProductDto").GetProperty("properties");
+        Assert.Equal("integer", TypeOf(parameters["page"]));
+        Assert.Equal("integer", TypeOf(parameters["pageSize"]));
+        Assert.Equal("integer", TypeOf(pagedResult.GetProperty("totalCount")));
+        Assert.Equal("number", TypeOf(product.GetProperty("price")));
+    }
+
+    [Theory]
+    [InlineData("v1")]
+    [InlineData("v2")]
+    public async Task OpenApiDocument_DescribesTheUpdateBodyAsDescriptionOnly(string version)
+    {
+        using var json = JsonDocument.Parse(await _client.GetStringAsync($"/openapi/{version}.json"));
+
+        var request = json.RootElement
+            .GetProperty("components").GetProperty("schemas").GetProperty("UpdateProductDescriptionRequest");
+        string[] expected = ["description"];
+        Assert.Equal(expected, request.GetProperty("properties").EnumerateObject().Select(property => property.Name));
+        Assert.False(request.GetProperty("additionalProperties").GetBoolean());
     }
 
     [Fact]
@@ -289,6 +329,18 @@ public sealed class ProductsApiTests : IDisposable
         SampleProducts.Create()
             .Select(product => product.Name)
             .Order(StringComparer.OrdinalIgnoreCase);
+
+    // Schemas of the query parameters of an OpenAPI path's GET operation, by parameter name
+    private static Dictionary<string, JsonElement> ParameterSchemas(JsonElement document, string path) =>
+        document
+            .GetProperty("paths").GetProperty(path).GetProperty("get").GetProperty("parameters")
+            .EnumerateArray()
+            .ToDictionary(
+                parameter => parameter.GetProperty("name").GetString()!,
+                parameter => parameter.GetProperty("schema"));
+
+    // A single type comes back as is, a list of types as JSON, e.g. ["integer","string"]
+    private static string TypeOf(JsonElement schema) => schema.GetProperty("type").ToString();
 
     private static async Task<TProblem> AssertProblemAsync<TProblem>(HttpResponseMessage response, HttpStatusCode status)
         where TProblem : ProblemDetails

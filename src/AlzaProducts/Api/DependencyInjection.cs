@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Asp.Versioning;
 
 namespace AlzaProducts.Api;
@@ -10,7 +11,11 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddApi(this IServiceCollection services)
     {
-        services.AddControllers();
+        // Numbers are plain JSON numbers: the web defaults also read "5" as 5, which the OpenAPI documents then
+        // describe as "integer | string". Controllers read JSON with the MVC options, the documents use the HTTP ones
+        services.AddControllers()
+            .AddJsonOptions(options => options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict);
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
         services.AddProblemDetails();
         services.AddHealthChecks();
         services.AddApiVersioning(options =>

@@ -21,7 +21,7 @@ Swagger UI documents both API versions at http://localhost:5169/swagger (Develop
 
 - A product has an `id` (GUID), `name`, `imgUri`, `price` and an optional `description`.
 - Paging (v2): `page` starts at 1 and `pageSize` is 1–100, 10 by default. The response holds `page`, `pageSize`, `totalCount`, `totalPages` and `items`; a page after the last one has no items.
-- Updating: the `description` property is required, `null` or `""` removes the description, and it can be at most 4000 characters long.
+- Updating: `description` is the only property accepted, and it is required; `null` or `""` removes the description, and it can be at most 4000 characters long.
 - Versioning: the version is part of the URL, and every response lists the supported versions in the `api-supported-versions` header.
 - Errors are returned as ProblemDetails (`application/problem+json`): 400 for invalid input, 404 for an unknown product or API version.
 - Health checks: `/health/live` answers while the process runs, `/health/ready` also checks that the database answers.
@@ -113,3 +113,14 @@ After a change to the data model, add a migration:
 ```bash
 dotnet ef migrations add <Name> --project src/AlzaProducts --output-dir Infrastructure/Persistence/Migrations
 ```
+
+## Design decisions
+
+- PATCH with a plain JSON body: only the description can change, so `{ "description": "..." }` is simpler for clients than JSON Patch. The property is required, so leaving it out (400) is never mistaken for removing the description (`null`); any other property is rejected instead of silently ignored.
+- 404 for a malformed id: the `{id:guid}` route constraint means `/api/v1/products/abc` matches no route.
+- An empty page after the last one: the request is valid, and `totalPages` tells the client where the list ends.
+- Separate controllers per API version: v2 offers every endpoint, so a client never mixes versions, and a change to one version can't leak into the other; an architecture test keeps them apart.
+- One project, layered by folders: the service is small, and the architecture tests enforce the dependency rules that separate projects would enforce at compile time.
+- A repository over EF Core: `DbContext` already is a repository, but the mock data must be swappable with the database. `IProductRepository` is that seam, and both implementations are tested for the same behavior.
+- Migrations on startup only in Development: production applies them in a separate deployment step (the idempotent script above), so the application needs no permission to change the schema and starts even while the database is down.
+- Left out on purpose: authentication, optimistic concurrency (of two simultaneous updates, the last one wins), rate limiting and caching.
