@@ -35,6 +35,7 @@ public static class DependencyInjection
                     
                 // Scoped, like the DbContext: every request gets its own
                 services.AddScoped<IProductRepository, SqlProductRepository>();
+                services.AddHealthChecks().AddDbContextCheck<AlzaProductsDbContext>("database");
                 break;
         }
 

@@ -2,6 +2,7 @@ using AlzaProducts.Api;
 using AlzaProducts.Application;
 using AlzaProducts.Infrastructure;
 using AlzaProducts.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,11 @@ if (app.Environment.IsDevelopment())
         options.DocumentTitle = "Alza Products API";
     });
 }
+
+// Liveness: the process answers. It checks no dependencies, so a database outage doesn't get the app restarted.
+// Readiness: every registered check passes (e.g. the database answers), so the app can receive traffic
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready");
 
 app.MapControllers();
 

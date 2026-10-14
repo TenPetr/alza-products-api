@@ -5,13 +5,14 @@ namespace AlzaProducts.Api;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Registers the controllers, standard error responses (ProblemDetails), API versioning
+    /// Registers the controllers, standard error responses (ProblemDetails), health checks, API versioning
     /// and one OpenAPI document per API version
     /// </summary>
     public static IServiceCollection AddApi(this IServiceCollection services)
     {
         services.AddControllers();
         services.AddProblemDetails();
+        services.AddHealthChecks();
         services.AddApiVersioning(options =>
             {
                 // The version is a part of the URL (/api/v1/...) and responses list the supported versions in a header
