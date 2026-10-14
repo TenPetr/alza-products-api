@@ -1,5 +1,7 @@
 # Alza Products API
 
+[![CI](https://github.com/TenPetr/alza-products-api/actions/workflows/ci.yml/badge.svg)](https://github.com/TenPetr/alza-products-api/actions/workflows/ci.yml)
+
 Author: Petr Jelínek
 
 REST API that serves the products of an e-shop and allows a partial update of a single product
