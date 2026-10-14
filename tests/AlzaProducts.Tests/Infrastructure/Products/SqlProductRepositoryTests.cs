@@ -15,7 +15,7 @@ public sealed class SqlProductRepositoryTests(SqlServerFixture sqlServer)
     [SqlServerFact]
     public async Task GetAllAsync_ReturnsProductsInTheSameOrderAsTheMockData()
     {
-        var connectionString = await sqlServer.CreateDatabaseAsync(SampleProducts.Create());
+        var connectionString = await sqlServer.CreateDatabaseAsync();
         await using var context = SqlServerFixture.CreateContext(connectionString);
 
         var products = await new SqlProductRepository(context).GetAllAsync();
@@ -40,7 +40,7 @@ public sealed class SqlProductRepositoryTests(SqlServerFixture sqlServer)
     [SqlServerFact]
     public async Task GetPageAsync_ReturnsRequestedPageAndTotalCount()
     {
-        var connectionString = await sqlServer.CreateDatabaseAsync(SampleProducts.Create());
+        var connectionString = await sqlServer.CreateDatabaseAsync();
         await using var context = SqlServerFixture.CreateContext(connectionString);
         var repository = new SqlProductRepository(context);
         var all = await repository.GetAllAsync();

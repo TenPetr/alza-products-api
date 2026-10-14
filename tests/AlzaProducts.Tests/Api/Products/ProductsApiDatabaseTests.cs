@@ -17,7 +17,7 @@ public sealed class ProductsApiDatabaseTests(SqlServerFixture sqlServer)
     [SqlServerFact]
     public async Task GetPage_ReadsProductsFromTheDatabase()
     {
-        var connectionString = await sqlServer.CreateDatabaseAsync(SampleProducts.Create());
+        var connectionString = await sqlServer.CreateDatabaseAsync();
         await using var application = new WebApplicationFactory<Program>();
         using var client = CreateDatabaseClient(application, connectionString);
 
@@ -36,7 +36,7 @@ public sealed class ProductsApiDatabaseTests(SqlServerFixture sqlServer)
     public async Task UpdateDescription_IsStoredInTheDatabase()
     {
         var id = SampleProducts.Create()[0].Id;
-        var connectionString = await sqlServer.CreateDatabaseAsync(SampleProducts.Create());
+        var connectionString = await sqlServer.CreateDatabaseAsync();
         await using var application = new WebApplicationFactory<Program>();
         using var client = CreateDatabaseClient(application, connectionString);
 
@@ -46,6 +46,20 @@ public sealed class ProductsApiDatabaseTests(SqlServerFixture sqlServer)
         await using var context = SqlServerFixture.CreateContext(connectionString);
         var stored = await context.Products.FindAsync(id);
         Assert.Equal("Stored in SQL Server", stored?.Description);
+    }
+
+    // The tests run in Development, where the application creates and seeds its database on startup
+    [SqlServerFact]
+    public async Task Startup_CreatesAndSeedsAMissingDatabase()
+    {
+        var connectionString = sqlServer.NewDatabaseConnectionString();
+        await using var application = new WebApplicationFactory<Program>();
+        using var client = CreateDatabaseClient(application, connectionString);
+
+        var page = await client.GetFromJsonAsync<PagedResult<ProductDto>>("/api/v2/products");
+
+        Assert.NotNull(page);
+        Assert.Equal(SampleProducts.Create().Count, page.TotalCount);
     }
 
     private static HttpClient CreateDatabaseClient(WebApplicationFactory<Program> application, string connectionString) =>

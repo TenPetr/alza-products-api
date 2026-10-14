@@ -12,8 +12,8 @@ namespace AlzaProducts.Tests.Infrastructure.Persistence;
 /// </summary>
 public sealed class SqlServerFixture : IAsyncLifetime
 {
-    // The image of the local development database, so it is usually downloaded already
-    private const string Image = "mcr.microsoft.com/mssql/server:2022-latest";
+    // The same pinned image as compose.yaml, so it is usually downloaded already
+    private const string Image = "mcr.microsoft.com/mssql/server:2022-CU27-ubuntu-22.04";
 
     private MsSqlContainer? _container;
 
@@ -40,23 +40,40 @@ public sealed class SqlServerFixture : IAsyncLifetime
     }
 
     /// <summary>
-    /// Creates a new database holding the given products, so tests never share data, and returns its connection string
+    /// Creates a new database the way the application does, through the migrations and the seeding, so it starts
+    /// with the sample products; given products replace them. Every test gets its own database, so tests never share
+    /// data. Returns its connection string
     /// </summary>
-    public async Task<string> CreateDatabaseAsync(IEnumerable<Product> products)
+    public async Task<string> CreateDatabaseAsync(IEnumerable<Product>? products = null)
     {
-        var container = _container ?? throw new InvalidOperationException("SQL Server is not running, Docker is not available");
-        var connectionString = new SqlConnectionStringBuilder(container.GetConnectionString())
-        {
-            InitialCatalog = $"AlzaProducts_{Guid.NewGuid():N}",
-        }.ConnectionString;
+        var connectionString = NewDatabaseConnectionString();
 
         await using var context = CreateContext(connectionString);
-        await context.Database.EnsureCreatedAsync();
-        context.Products.AddRange(products);
-        await context.SaveChangesAsync();
+        await context.Database.MigrateAsync();
+        if (products is not null)
+        {
+            await context.Products.ExecuteDeleteAsync();
+            context.Products.AddRange(products);
+            await context.SaveChangesAsync();
+        }
+
         return connectionString;
     }
 
+    /// <summary>Connection string of a new database that does not exist yet</summary>
+    public string NewDatabaseConnectionString()
+    {
+        var container = _container ?? throw new InvalidOperationException("SQL Server is not running, Docker is not available");
+        return new SqlConnectionStringBuilder(container.GetConnectionString())
+        {
+            InitialCatalog = $"AlzaProducts_{Guid.NewGuid():N}",
+        }.ConnectionString;
+    }
+
+    // Configured like the application, seeding included
     public static AlzaProductsDbContext CreateContext(string connectionString) =>
-        new(new DbContextOptionsBuilder<AlzaProductsDbContext>().UseSqlServer(connectionString).Options);
+        new(new DbContextOptionsBuilder<AlzaProductsDbContext>()
+            .UseSqlServer(connectionString)
+            .UseSampleProductsSeeding()
+            .Options);
 }

@@ -2,13 +2,28 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "AlzaProducts (http)",
+      "name": "AlzaProducts (database)",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/src/AlzaProducts/bin/Debug/net10.0/AlzaProducts.dll",
       "cwd": "${workspaceFolder}/src/AlzaProducts",
       "launchSettingsProfile": "http",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      }
+    },
+    {
+      "name": "AlzaProducts (mock data)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/AlzaProducts/bin/Debug/net10.0/AlzaProducts.dll",
+      "cwd": "${workspaceFolder}/src/AlzaProducts",
+      "launchSettingsProfile": "http (mock data)",
       "stopAtEntry": false,
       "serverReadyAction": {
         "action": "openExternally",

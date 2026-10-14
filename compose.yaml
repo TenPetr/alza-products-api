@@ -1,0 +1,25 @@
+# SQL Server for running the API with "DataSource": "Database" on macOS, Linux or Windows without LocalDB:
+#   docker compose up -d --wait
+# The sa password comes from MSSQL_SA_PASSWORD, e.g. a line MSSQL_SA_PASSWORD='...' in a .env file next to
+# this one (.env is git-ignored). SQL Server needs at least 8 characters from three of: upper case, lower case,
+# digits, symbols.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-CU27-ubuntu-22.04
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD, e.g. in a .env file next to compose.yaml}
+    ports:
+      - "127.0.0.1:${SQL_SERVER_PORT:-1433}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+volumes:
+  sqlserver-data:

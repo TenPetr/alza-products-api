@@ -27,9 +27,12 @@ public static class DependencyInjection
                     throw new InvalidOperationException("Connection string Products is missing");
                 }
 
-                // Retries transient errors, e.g. when the database briefly drops the connection
-                services.AddDbContext<AlzaProductsDbContext>(options =>
-                    options.UseSqlServer(connectionString, sqlServer => sqlServer.EnableRetryOnFailure()));
+                // Retries transient errors, e.g. when the database briefly drops the connection;
+                // an empty database gets the sample products when it is migrated
+                services.AddDbContext<AlzaProductsDbContext>(options => options
+                    .UseSqlServer(connectionString, sqlServer => sqlServer.EnableRetryOnFailure())
+                    .UseSampleProductsSeeding());
+                    
                 // Scoped, like the DbContext: every request gets its own
                 services.AddScoped<IProductRepository, SqlProductRepository>();
                 break;

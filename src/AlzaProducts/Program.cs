@@ -1,6 +1,7 @@
 using AlzaProducts.Api;
 using AlzaProducts.Application;
 using AlzaProducts.Infrastructure;
+using AlzaProducts.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,8 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
+    await app.Services.MigrateDatabaseAsync();
+
     // One OpenAPI document and Swagger UI definition per API version (v1, v2, ...)
     app.MapOpenApi().WithDocumentPerVersion();
     app.UseSwaggerUI(options =>
